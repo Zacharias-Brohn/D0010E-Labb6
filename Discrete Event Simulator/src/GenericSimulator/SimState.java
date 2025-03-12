@@ -6,9 +6,13 @@ import java.util.Observable;
 
 public abstract class SimState extends Observable {
     private boolean stopSim = false;
-    private int totalTime;
+    private int currentTime;
 
-    public void forceStop() {
+    void forceStop() {
         this.stopSim = true;
+    }
+
+    boolean stopSim(){
+        return this.stopSim;
     }
 }

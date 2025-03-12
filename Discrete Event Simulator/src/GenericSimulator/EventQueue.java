@@ -1,9 +1,20 @@
 package GenericSimulator;
 
+import java.util.PriorityQueue;
+
 //TODO: 
 
-public class EventQueue {
+public class EventQueue extends PriorityQueue {
     private SimState state;
-    private SortedEvents events;
+
+    EventQueue(SimState state){
+        this.state = state;
+    }
+
+    @Override
+    public boolean add(Event e) {
+        this.comparator()
+        return super.add(e);
+    }
 
 }

@@ -10,7 +10,6 @@ public class Simulator implements Runnable {
     Simulator(SimState state, EventQueue queue){
         this.state = state;
         this.eventQueue = queue;
-
     }
 
     void invokeNextEvent(){
@@ -20,6 +19,8 @@ public class Simulator implements Runnable {
 
 
     public void run(){
-        
+        while (!state.stopSim()) {
+            
+        }
     }
 }

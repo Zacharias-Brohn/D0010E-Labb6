@@ -7,8 +7,16 @@ import java.util.Observer;
 public abstract class SimView implements Observer {
     private SimState state;
     
-    public void update(){
+    public void update(SimState state){
+        this.state = state;
+
 
     }
+
+    protected SimState state(){
+        return this.state;
+    }
+
+    abstract update();
 }
 
