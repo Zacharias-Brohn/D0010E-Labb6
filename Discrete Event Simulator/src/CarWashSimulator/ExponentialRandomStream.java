@@ -1,5 +1,5 @@
 
-package random;
+package CarWashSimulator;
 
 import java.util.Random;
 

@@ -4,23 +4,19 @@ import java.util.Observer;
 
 //TODO: 
 
+/**
+ * @author Niklas Lehtola
+ * An abstract class for the simView that 
+ */
 public abstract class SimView implements Observer {
     private SimState state;
     
-    public void update(SimState state){
-        this.state = state;
-
-
-    }
-
-    protected SimState state(){
+    /**
+     * Returns the current state of the simulation
+     * @return the current state of the simulation
+     */
+    protected SimState currentState(){
         return this.state;
-    }
-
-    abstract void update();
-
-    public static void main(String[] args) {
-        
     }
 }
 

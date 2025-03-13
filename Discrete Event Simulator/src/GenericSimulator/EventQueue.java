@@ -1,11 +1,9 @@
 package GenericSimulator;
 
-
 import java.util.PriorityQueue;
 
-//TODO: 
-
 /**
+ * @author Niklas Lehtola
  * A PriorityQueue that takes Events and sorts them based on the occurenceTime of said Events
  */
 public class EventQueue extends PriorityQueue<Event>  {  
@@ -17,9 +15,4 @@ public class EventQueue extends PriorityQueue<Event>  {
         super(new SortedEvents()); //Creates a PriorityQueue with our custom comparator that sorts according to occurenceTime
         this.add(startEvent);
     }
-
-    public static void main(String[] args) {
-        
-    }
-
 }
