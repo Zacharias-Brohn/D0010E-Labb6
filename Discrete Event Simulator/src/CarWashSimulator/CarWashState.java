@@ -1,11 +1,10 @@
 package CarWashSimulator;
 
-import random.ExponentialRandomStream;
-import random.UniformRandomStream;
+import GenericSimulator.SimState;
 
 //TODO: 
 
-class CarWashState {
+public class CarWashState extends SimState {
     private CarFactory carFactory = new CarFactory();
     private CarQueue carQueue = new CarQueue();
     private UniformRandomStream slowMachineStream;
@@ -13,7 +12,9 @@ class CarWashState {
     private ExponentialRandomStream carStream;
 
 
-    CarWashState(UniformRandomStream slow, UniformRandomStream fast, ExponentialRandomStream cars){
-
+    public CarWashState(UniformRandomStream slow, UniformRandomStream fast, ExponentialRandomStream cars){
+        this.slowMachineStream = slow;
+        this.fastMachineStream = fast;
+        this.carStream = cars;
     }
 }

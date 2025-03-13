@@ -1,20 +1,25 @@
 package GenericSimulator;
 
+
 import java.util.PriorityQueue;
 
 //TODO: 
 
-public class EventQueue extends PriorityQueue {
-    private SimState state;
-
-    EventQueue(SimState state){
-        this.state = state;
+/**
+ * A PriorityQueue that takes Events and sorts them based on the occurenceTime of said Events
+ */
+public class EventQueue extends PriorityQueue<Event>  {  
+    /**
+     * Constructor that takes a starting event to kick off the simulation
+     * @param startEvent The event that kicks off the simulation
+     */
+    public EventQueue(SimState state, Event startEvent){
+        super(new SortedEvents()); //Creates a PriorityQueue with our custom comparator that sorts according to occurenceTime
+        this.add(startEvent);
     }
 
-    @Override
-    public boolean add(Event e) {
-        this.comparator()
-        return super.add(e);
+    public static void main(String[] args) {
+        
     }
 
 }

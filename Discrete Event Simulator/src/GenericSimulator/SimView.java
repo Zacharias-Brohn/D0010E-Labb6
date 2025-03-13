@@ -17,6 +17,10 @@ public abstract class SimView implements Observer {
         return this.state;
     }
 
-    abstract update();
+    abstract void update();
+
+    public static void main(String[] args) {
+        
+    }
 }
 
