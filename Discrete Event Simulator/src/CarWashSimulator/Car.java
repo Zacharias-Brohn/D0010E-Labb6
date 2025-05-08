@@ -7,20 +7,14 @@ package CarWashSimulator;
  */
 class Car {
     private int id;
-    private MachineType type;
-    private double enteredSystemAtTime;
-    private double leftSystemAtTime;
-    private double timeQueued;
-    
+    private MachineType machineType = null;    
 
     /**
-     * Constructor that creates a Car with its ID and the time it entered the system
+     * Constructor that creates a Car with its ID
      * @param id    the car's ID
-     * @param enteredSystemAtTime   the time the car entered the system
      */
-    Car(int id, double enteredSystemAtTime){
+    Car(int id){
         this.id = id;
-        this.enteredSystemAtTime = enteredSystemAtTime;
     }
 
     /**
@@ -31,49 +25,25 @@ class Car {
         return this.id;
     }
 
-     /**
-     * Returns the time the Car entered the system.
-     * @return the time the Car entered the CarWashSystem.
-     */
-    double enteredSystemAtTime(){
-        return this.enteredSystemAtTime;
-    }
-
-    /**
-     * Returns the time the Car left the system or -1 if it is still in the system
-     * @return the time the Car left the system or -1 if it is still in the system
-     */
-    double leftSystemAtTime(){
-        return this.leftSystemAtTime;
-    }
-
     /**
      * Returns the carwasher type the car entered on being serviced
      * @return the carwasher type the car entered on being serviced
      */
     MachineType getType(){
-        return this.type;
+        return machineType;
     }
 
     /**
      * Sets the carwasher type to the type the Car entered on being serviced.
-     * @param type type of carwasher, either slow or fast.
+     * @param type Type of carwasher, either slowMachine or fastMachine.
+     * @throws IllegalStateException when trying to set the type when it has already been set before
      */
-    void setType(MachineType type){
-        this.type = type;
+    void setType(MachineType type) throws IllegalStateException{
+        if (machineType != null) {
+            throw new IllegalStateException("Cannot set the type twice.");
+        }
+        machineType = type;
     }
-
-    double getTimeQueued(){
-        return this.timeQueued;
-    }
-
-    public void setTimeQueued(double timeQueued) {
-        this.timeQueued = timeQueued;
-    }
-
-    
-
-   
 
 
 }

@@ -6,9 +6,9 @@ package CarWashSimulator;
  * @author Niklas lehtola
  * Describres how the stop event should behave for the CarWashSimulation
  */
-class CarWashStopEvent extends CarWashEvent {
+class StopEvent extends CarWashEvent {
 
-    CarWashStopEvent(double occurenceTime, CarWashState state) throws IllegalArgumentException {
+    StopEvent(double occurenceTime, CarWashState state) throws IllegalArgumentException {
         super(occurenceTime, state);
     }
 
@@ -17,12 +17,12 @@ class CarWashStopEvent extends CarWashEvent {
      */
     @Override
     public CarWashEvent[] invoke() {
-        currentState().forceStop();
-        //Updates the time statistics
-        currentState().updateIdleTime(this.occurenceTime());
+        //Updates the times then the observer CarWashView that an event has happened with this event as a parameter..
+        updateThings(this, occurenceTime(), currentState());
 
-        //Updates the observer CarWashView that an event has happened with this event as a parameter.
-        currentState().UpdateView(this);
+        //Trips the flag that the sim should stop
+        currentState().forceStop();
+
         return null;
     }
 

@@ -11,13 +11,6 @@ class CalculateTime {
     private UniformRandomStream slowMachineStream;
     private UniformRandomStream fastMachineStream;
 
-    private double slowLowerBound;
-    private double slowUpperBound;
-    private double fastLowerBound;
-    private double fastUpperBound;
-    private double lambda;
-    private long seed;
-
     /**
      * Constructor for the randomstreams used to calculate time
      * @param seed unique seed that structures the random number to be the same every run with the same seed
@@ -34,21 +27,15 @@ class CalculateTime {
 
         //Two version depending on if the seed is to be used or not
         if (useSeed) {  //"structured" randoms
-            this.carStream = new ExponentialRandomStream(lambda, seed);
+            this.carStream         = new ExponentialRandomStream(lambda, seed);
             this.slowMachineStream = new UniformRandomStream(slowLowerBound, slowUpperBound, seed);
             this.fastMachineStream = new UniformRandomStream(fastLowerBound, fastUpperBound, seed);
 
         } else {        //Non-structured "randoms"
-            this.carStream = new ExponentialRandomStream(lambda);
+            this.carStream         = new ExponentialRandomStream(lambda);
             this.slowMachineStream = new UniformRandomStream(slowLowerBound, slowUpperBound);
             this.fastMachineStream = new UniformRandomStream(fastLowerBound, fastUpperBound); 
         }
-        this.slowLowerBound = slowLowerBound;
-        this.slowUpperBound = slowUpperBound;
-        this.fastLowerBound = fastLowerBound;
-        this.fastUpperBound = fastUpperBound;
-        this.lambda = lambda;
-        this.seed = seed;
     }
 
     /**
@@ -56,77 +43,30 @@ class CalculateTime {
      * @return arrival time of the next car.
      */
     double nextCarArrival(double currentTime){
-        return currentTime + this.carStream.next();
-    }
-
-    /**
-     * Returns slowLowerBound
-     * @return slowLowerBound
-     */
-    public double getSlowLowerBound() {
-        return slowLowerBound;
-    }
-
-    /**
-     * Returns slowUpperBound
-     * @return slowUpperBound
-     */
-    public double getSlowUpperBound() {
-        return slowUpperBound;
-    }
-
-    /**
-     * Returns FastLowerBound
-     * @return FastLowerBound
-     */
-    public double getFastLowerBound() {
-        return fastLowerBound;
-    }
-
-    /**
-     * Returns FastUpperBound
-     * @return FastUpperBound
-     */
-    public double getFastUpperBound() {
-        return fastUpperBound;
-    }
-
-    /**
-     * Returns Lambda
-     * @return Lambda
-     */
-    public double getLambda() {
-        return lambda;
-    }
-
-    /**
-     * Returns the seed
-     * @return the seed
-     */
-    public long getSeed() {
-        return seed;
+        return currentTime + carStream.next();
     }
 
     /**
      * Calculates when the Car will leave the carwasher it just entered\n
-     * Also calculates how long the car spent in the Queue
      * @param car the car to calculate for
-     * @return the calculated departure time.
+     * @param currentTime The current time
      */
-    double leavingTime(Car car , double currentTime){
-        double timePassed;
+    double carLeavingTime(Car car, double currentTime) throws IllegalArgumentException{
+        double timePassed, leavingTime;
+        //Calculates the time passed in the carwash based on the type of machine it entered
         switch (car.getType()) {
             case SlowMachine:
-                timePassed = this.slowMachineStream.next();
+                timePassed = slowMachineStream.next();
                 break;
             case FastMachine:
-                timePassed = this.fastMachineStream.next();
+                timePassed = fastMachineStream.next();
                 break;
             default:
-                return currentTime; //Should never happen
+                timePassed = 0; //Should never happen
         }
-        car.setTimeQueued(calculateQueueTime(car, timePassed));
-        return currentTime + timePassed;
+        //Calculate and assign the time the car leaves
+        leavingTime = currentTime + timePassed;
+        return leavingTime;
     }
 
     /**
@@ -142,24 +82,29 @@ class CalculateTime {
     }
 
     /**
-     * Controls that time has not moved in reverse
+     * Calculates the time cars has spent in queue since last event
      * @param currentTime the time of the last event
      * @param newTime     the time of this event
+     * @param queueLength number of cars in queue
+     * @return the time cars spent in queue since last invoked event
+     */
+    double calculateQueueTime(double currentTime, double newTime, int queueLength) {
+        isValidTime(currentTime, newTime);
+        return (newTime - currentTime)*queueLength;
+    }
+
+
+    /**
+     * Controls that time has not moved in reverse
+     * @param oldTime the previous time 
+     * @param newTime the new time
      * @return true if the time is valid else throws an IllegalArgumentException
      * @throws IllegalArgumentException if newTime is lower than oldTime
      */
-    boolean isValidTime(double currentTime, double newTime) throws IllegalArgumentException {
-        if (newTime < currentTime) {
+    boolean isValidTime(double oldTime, double newTime) throws IllegalArgumentException {
+        if (newTime < oldTime) {
             throw new IllegalArgumentException("Time cannot move backwards");
         }
         return true;
     }
-
-     
-
-     //Calculates the time the car spent in the CarQueue
-     private double calculateQueueTime(Car car, double timePassed){
-        return car.leftSystemAtTime() - (car.enteredSystemAtTime() +  timePassed);
-     }
-
 }

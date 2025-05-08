@@ -96,8 +96,5 @@ class CarQueue{
         Car firstCar = peek();
         this.carQueue.remove(0);
         return firstCar;
-    }
-
-    
-
+    }   
 }

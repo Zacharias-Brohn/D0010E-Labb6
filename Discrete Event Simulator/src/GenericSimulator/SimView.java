@@ -2,21 +2,11 @@ package GenericSimulator;
 
 import java.util.Observer;
 
-//TODO: 
-
 /**
  * @author Niklas Lehtola
- * An abstract class for the simView that 
+ * An abstract class for the simView that subclasses may decide to implement
  */
 public abstract class SimView implements Observer {
-    private SimState state;
-    
-    /**
-     * Returns the current state of the simulation
-     * @return the current state of the simulation
-     */
-    protected SimState currentState(){
-        return this.state;
-    }
+    protected boolean shouldPrint;
 }
 

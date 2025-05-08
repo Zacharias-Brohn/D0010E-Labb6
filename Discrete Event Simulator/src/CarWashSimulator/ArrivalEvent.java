@@ -4,11 +4,11 @@ import static CarWashSimulator.MachineType.*;
 
 /**
  * @author Niklas lehtola
- * Class that defines how an arriving car behaves and how it affect the simulation
+ * Class that defines how an arriving car behaves and how it affects the simulation
  */
 class ArrivalEvent extends CarWashEvent {
 
-    private Car arrivedCar;
+    private Car arrivedCar = null;
     
     /**
      * @param occurenceTime
@@ -20,54 +20,66 @@ class ArrivalEvent extends CarWashEvent {
     }
     
     /**
-     * 
+     * Describes the effect this event has on the state of the simulation
      */
     @Override
     public CarWashEvent[] invoke() {
+        arrivedCar = createCar();
+        //Updates the times then the observer CarWashView that an event has happened with this event as a parameter..
+        updateThings(this, occurenceTime(), currentState());
+
+
         //Constants that depend on the number of slots available in the system
         final boolean MACHINES_AVAILABLE = currentState().getAvailableMachines() > 0;
         final boolean NO_MACHINES_AVAILABLE = !MACHINES_AVAILABLE;
-        final boolean CAR_QUEUE_HAS_SPACE = !currentState().carQueue().isFull();
+        final boolean CAR_QUEUE_IS_FULL = currentState().carQueue().isFull();
         //Constants for how many events are created at car arrrivals 
         final int MAX_EVENTS = 2;
         final int NEW_EVENTS_CREATED = MACHINES_AVAILABLE ? MAX_EVENTS : 1;
 
-        //Updates the time statistics
-        currentState().updateIdleTime(this.occurenceTime());
-
-
-        //The array that holds the events
-        CarWashEvent[] newEvents = new CarWashEvent[NEW_EVENTS_CREATED];
+        //adds the events into an array
+        newEvents = new CarWashEvent[NEW_EVENTS_CREATED];
 
         //Three cases from here:
-        //Case 1: There are available machines -> car gets created and serviced immediately
-        if (MACHINES_AVAILABLE) { 
-            //creates a car for the arrival event and creates the departure event with said car
-            this.arrivedCar = currentState().createCar(this.occurenceTime());
-            //Priority to entering a fast type carwasher if there's one avaialble
-            this.arrivedCar.setType(chooseFastestAvailableMachine());
-
-            //Adds the departure event at index 1 as it only exists if there's machines available
-
-            //newEvents[1] = new DepartureEvent
-
-        //Case 2: No machines available, but there's space in the queue -> car gets created and entered into the CarQueue
-        } else if (NO_MACHINES_AVAILABLE && CAR_QUEUE_HAS_SPACE) { 
-            enqeueuCar(currentState().createCar(this.occurenceTime()));
-
-        //Case 3: Neither space in queue or available machines -> Car gets rejected    
-        } else {
+       
+        //Case 1: Neither space in queue or available machines -> Car gets rejected  
+        if (NO_MACHINES_AVAILABLE && CAR_QUEUE_IS_FULL) {
             currentState().incrementRejectedCars();
         }
+        else {
+            currentState().incrementAdmittedCars();
+
+
+             //Case 2: There are available machines -> car gets serviced immediately
+            if (MACHINES_AVAILABLE) {
+                //Priority to entering a fast type carwasher if there's one available
+                arrivedCar.setType(chooseFastestAvailableMachine());
+                //Calculates and sets the car's departure time.
+                double leavingTime = carLeavingTime(arrivedCar, occurenceTime());
+                //Adds the departure event at index 1 as it only exists if there's machines available
+
+                newEvents[1] = new DepartureEvent(leavingTime, currentState(), arrivedCar);
+
+            //Case 3: No machines available, but there's space in the queue -> car gets entered into the CarQueue
+            } else {
+                enqueueCar(arrivedCar);
+            }
+        }
+        
 
         //Creates the next ArrivalEvent
-        newEvents[0] = new ArrivalEvent(nextCarArrival(), currentState());
-
-        //Updates the observer CarWashView that an event has happened with this event as a parameter.
-        currentState().UpdateView(this);
+        newEvents[0] = new ArrivalEvent(nextCarArrivalTime(occurenceTime()), currentState());
 
         //returns the created events
         return newEvents;
+    }
+
+    /**
+     * Returns the arrived car
+     * @return the arrived car
+     */
+    Car getCar() {
+        return arrivedCar;
     }
 
     /**
@@ -79,9 +91,19 @@ class ArrivalEvent extends CarWashEvent {
         return "Arrival";
     }
 
-    //Enqueues the given car in the CarQueue
-    private void enqeueuCar(Car car){
+    //----------------------------------
+    //  Helper functions
+    //----------------------------------
+
+    //Creates a car and enqueues it in the CarQueue
+    private void enqueueCar(Car car){
         currentState().carQueue().enqueue(car);
+    }
+
+    //Creates a new car from the CarFactory and returns it
+    private Car createCar(){
+        Car car = currentState().createCar();
+        return car;
     }
 
     //Returns the fastest available carwasher type
@@ -94,8 +116,4 @@ class ArrivalEvent extends CarWashEvent {
             return SlowMachine;
         }
     }
-    
-
-
-
 }

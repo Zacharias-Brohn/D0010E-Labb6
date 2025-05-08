@@ -7,7 +7,7 @@ import static CarWashSimulator.MachineType.*;
  * Class that defines how an departing car behaves and how it affect the simulation
  */
 class DepartureEvent extends CarWashEvent {
-    Car leavingCar;
+    private Car leavingCar;
 
     /**
      * Constructor for the departure event
@@ -27,13 +27,16 @@ class DepartureEvent extends CarWashEvent {
      */
     @Override
     public CarWashEvent[] invoke() {
+        //Updates the times then the observer CarWashView that an event has happened with this event as a parameter..
+        updateThings(this, occurenceTime(), currentState());
+
         final boolean CARQUEUE_IS_EMPTY = currentState().carQueue().isEmpty();
-        final MachineType RELEASED_CARWASHER = releasedMachine(this.leavingCar);
+        final MachineType RELEASED_CARWASHER = releasedMachine(leavingCar);
         //Creates no new events if the queue is empty
         final int NEW_EVENTS_CREATED = CARQUEUE_IS_EMPTY ? 0 : 1;
 
-        //The array that holds the events
-        CarWashEvent[] newEvents = new CarWashEvent[NEW_EVENTS_CREATED];
+        //Adds the events into an array
+        newEvents = new CarWashEvent[NEW_EVENTS_CREATED];
 
         //Two cases from here:
         //Case 1: CarQueue is empty -> a machine is released
@@ -45,19 +48,14 @@ class DepartureEvent extends CarWashEvent {
             }
         //Case 2: CarQeueu is not empty -> The first Car in the queue takes the released carwasher and enters
         } else {;
-            Car nextCar = dequeueNextCar(); //First in teh CarQueue
+            Car nextCar = dequeueNextCar(); //First in the CarQueue
             nextCar.setType(RELEASED_CARWASHER); //The machine that was just released
-            //Calculates when nextCar will leave and creates its departure event
-            newEvents[0] = new DepartureEvent(carLeaving(nextCar), currentState(), nextCar);
+            //Calculates and sets the car's departure time.
+            double leavingTime = carLeavingTime(nextCar, occurenceTime());
+            //Adds the departure event at index 1 as it only exists if there's machines available
+            newEvents[0] = new DepartureEvent(leavingTime, currentState(), nextCar);
         }
-
-        //Updates the total idling time
-        currentState().updateIdleTime(this.occurenceTime());
-        //Adds the time this car has queued to the total
-        currentState().updateTotalQueueingTime(this.leavingCar.getTimeQueued());
         
-        //Updates the observer CarWashView that an event has happened with this event as a parameter.
-        currentState().UpdateView(this);
         //returns the new events created
         return newEvents;
     }
@@ -71,6 +69,18 @@ class DepartureEvent extends CarWashEvent {
         return "Departure";
     }
 
+    /**
+     * Returns the leaving car
+     * @return the leaving car
+     */
+    Car getCar() {
+        return leavingCar;
+    }
+
+    //--------------------------
+    //  Helper functions
+    //--------------------------
+    
     private Car dequeueNextCar(){
         return currentState().carQueue().dequeue();
     }

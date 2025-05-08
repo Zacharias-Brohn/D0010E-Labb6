@@ -1,7 +1,6 @@
 package CarWashSimulator;
 
 import GenericSimulator.SimState;
-import static CarWashSimulator.CarWashDefaultConstants.*;
 
 
 /**
@@ -11,16 +10,18 @@ import static CarWashSimulator.CarWashDefaultConstants.*;
  */
 public class CarWashState extends SimState {
 
-    private CarFactory carFactory = new CarFactory();
-    private CarQueue carQueue;
+    private CarFactory    carFactory = new CarFactory();
+    private CarQueue      carQueue;
     private CalculateTime calcTime;
-    private int maxQueueSize;
-
-    private int slowMachines;
-    private int fastMachines;
-    private double totalIdleTime = 0;
-    private double totalQueueTime = 0;
-    private int rejectedCars = 0;
+    private boolean       shouldPrint;
+    
+    private int     maxQueueSize;
+    private int     slowMachines;
+    private int     fastMachines;
+    private double  totalIdleTime  = 0;
+    private double  totalQueueTime = 0;
+    private int     admittedCars = 0;
+    private int     rejectedCars   = 0;
     
     // -----------------------------------------------------
     //  Constructors
@@ -32,41 +33,35 @@ public class CarWashState extends SimState {
      * @param slowMachines the number of slow carwashers
      * @param fastMachines the number of fast carwashers
      * @param maxQueueSize max size queue of waiting cars
-     * @param seed  the seed that is addedd to the random streams
-     * @param lambda the lambda value for the exponential stream
-     * @param slowLowerBound lower bound of the time that slow carwashers take
-     * @param slowUpperBound upper bound of the time that slow carwashers take
-     * @param fastLowerBound lower bound of the time that fast carwashers take
-     * @param fastUpperBound upper bound of the time that fast carwashers take
+     * @param printOut wether the view should print the results or not
      */
-    public CarWashState(int slowMachines, int fastMachines, int maxQueueSize, 
-                        long seed, boolean useSeed, double lambda, 
-                        double slowLowerBound, double slowUpperBound, 
-                        double fastLowerBound, double fastUpperBound){
+    public CarWashState(int slowMachines, int fastMachines, int maxQueueSize, boolean shouldPrint){
+        if (slowMachines < 0 || fastMachines < 0 || (fastMachines+slowMachines) <= 0) {
+            throw new IllegalArgumentException("Machines may not be negative or non-existent");
+        }
+        if (maxQueueSize < 0) {
+            throw new IllegalArgumentException("Queue may not be negative");
+        }
+        this.slowMachines = slowMachines;
+        this.fastMachines = fastMachines;
+        this.maxQueueSize = maxQueueSize;
+        this.shouldPrint = shouldPrint;
+        carQueue  = new CarQueue(maxQueueSize);
+    }
 
+    void setupCalcTime(long seed, boolean useSeed, double lambda, 
+                        double slowLowerBound, double slowUpperBound, 
+                        double fastLowerBound, double fastUpperBound) {
         //Creates the instance of calcTime specified
         this.calcTime = new CalculateTime(seed, useSeed, lambda, 
                                           slowLowerBound, slowUpperBound, 
                                           fastLowerBound, fastUpperBound);
-        this.slowMachines = slowMachines;
-        this.fastMachines = fastMachines;
-        this.maxQueueSize = maxQueueSize;
-        carQueue  = new CarQueue(maxQueueSize);
-        
     }
 
-    /**
-     * Constructor that creates a CarWashState with the Default saved values.
-     */
-    public CarWashState(boolean useSeed){
-        this(SLOW_MACHINES, FAST_MACHINES, MAX_QUEUE_SIZE, 
-             DEFAULT_SEED, useSeed, DEFAULT_LAMBDA,
-             SLOW_LOWER_BOUND, SLOW_UPPER_BOUND, 
-             FAST_LOWER_BOUND, FAST_UPPER_BOUND);
-    }
-
-    CarWashView createDisplay(){
-        return new CarWashView(true);
+    protected CarWashView createView(){
+        CarWashView view = new CarWashView(shouldPrint);
+        this.addObserver(view);
+        return view;
     }
 
     // -----------------------------------------------------
@@ -131,6 +126,14 @@ public class CarWashState extends SimState {
     }
 
     /**
+     * Returns the amount of admitted cars
+     * @return the amount of admitted cars
+     */
+    int getAdmittedCars() {
+        return this.admittedCars;
+    }
+
+    /**
      * Returns the amount of rejected cars
      * @return the amount of rejected cars
      */
@@ -159,88 +162,84 @@ public class CarWashState extends SimState {
     // -----------------------------------------------------
 
     /**
-     * Trips the flag that the simulation should stop
+     * Sets the current time
+     * @param newTime time to set to
      */
     @Override
-    protected void forceStop() {
-        super.forceStop();
+    protected void setCurrentTime(double newTime){
+        calcTime().isValidTime(getCurrentTime(), newTime);
+        super.setCurrentTime(newTime);
     }
+
+    /**
+     * Updates the total idling time
+     * @param newTime time to set to (may not be smaller than previous value)
+     */
+    void setTotalIdleTime(double newTime) {
+        calcTime().isValidTime(getTotalIdleTime(), newTime);
+        totalIdleTime = newTime;
+    }
+
+    /**
+     * Updates the total queueing time
+     * @param newTime time to set to (may not be smaller than previous value)
+     */
+    void setTotalQueueTime(double newTime) {
+        calcTime().isValidTime(getTotalTimeQueued(), newTime);
+        totalQueueTime = newTime;
+    }
+
     /**
      * Creates and returns a car from the carFactory
      * @param enteredAtTime parameter for when the car entered the system
      * @return the created car
      */
-    Car createCar(double enteredAtTime){
-        return this.carFactory.createCar(enteredAtTime);
+    Car createCar(){
+        return this.carFactory.createCar();
     }
 
     /**
      * Increments the amount of fast machines by 1
      */
     void incrementFastMachines(){
-        this.fastMachines += 1;
+        fastMachines += 1;
     }
 
     /**
      * Decrements the amount of fast machines by 1
      */
     void decrementFastMachines(){
-        this.fastMachines -= 1;
+        fastMachines -= 1;
     }
 
     /**
      * Increments the amount of slow machines by 1
      */
     void incrementSlowMachines(){
-        this.slowMachines += 1;
+        slowMachines += 1;
     }
 
     /**
      * Decrements the amount of slow machines by 1
      */
     void decrementSlowMachines(){
-        this.slowMachines -= 1;
+        slowMachines -= 1;
     }
+
+     /**
+     * Increments the amount of rejected cars by 1
+     */
+    void incrementAdmittedCars(){
+        admittedCars += 1;
+    }   
+
 
     /**
      * Increments the amount of rejected cars by 1
      */
     void incrementRejectedCars(){
-        this.rejectedCars += 1;
-    }
-
-    /**
-     * Updates the total time carwashers spent idling since last invoked event
-     * @param newTime time of the latest event
-     */
-    void updateIdleTime(double newTime){
-        calcTime().isValidTime(getCurrentTime(), newTime);
-        this.totalIdleTime += calcTime().calculateIdleTime(getCurrentTime(), newTime, getAvailableMachines());
-    }
-
-    /**
-     * Adds newTime to the current total queueing tme
-     * @param newTime time to add to the total queueing time
-     * @throws IllegalArgumentException if newTime is negative
-     */
-    void updateTotalQueueingTime(double newTime) throws IllegalArgumentException {
-        if (newTime < 0 ) {
-            throw new IllegalArgumentException("Total queueing time cannot decrease!");
-        }
-        this.totalQueueTime += newTime;
-    }
-
-
-    /**
-     * Updates the current time to the newtime
-     * @param newTime the new time 
-     */
-    @Override
-    protected void updateCurrentTime(double newTime) {
-        calcTime().isValidTime(getCurrentTime(), newTime);
-        super.updateCurrentTime(newTime);
-    }
-    
+        rejectedCars += 1;
+    }   
 
     /**
      * Sends the latest event to CarWashView
@@ -251,4 +250,12 @@ public class CarWashState extends SimState {
         this.setChanged();
         this.notifyObservers(event);
     }  
+
+    /**
+     * Trips the flag to stop the simulation
+     */
+    @Override
+    protected void forceStop() {
+        super.forceStop();
+    }
 }

@@ -7,22 +7,28 @@ import java.util.Observable;
  * An abstract class describing what all discrete event simulators should have in common.
  */
 public abstract class SimState extends Observable {
-    private boolean stopSim = false;
+    private boolean continueSim = true;
     private double currentTime = 0;
+
+    /**
+     * Creates the View of the Simulation (To be implemented by the subclasses)
+     * @return The SimView
+     */
+    abstract protected SimView createView();
 
     /**
      * Trips the flag that the simulation should stop
      */
     protected void forceStop() {
-        this.stopSim = true;
+        continueSim = false;
     }
 
     /**
-     * Returns if the stopSim flag is tripped or not
-     * @return if the stopSim flag is tripped or not
+     * Returns if the Sim should continue or not
+     * @return if the Sim should continue or not
      */
-    boolean stopSim(){
-        return this.stopSim;
+    boolean continueSim(){
+        return continueSim;
     }
 
     /**
@@ -31,13 +37,13 @@ public abstract class SimState extends Observable {
      */
     protected double getCurrentTime() {
         return currentTime;
-    }
+    }   
 
     /**
-     * Updates the current time
-     * @param newTime the new time to update to
+     * Sets the current type
+     * @param newTime the new time to set to
      */
-    protected void updateCurrentTime(double newTime){
-        this.currentTime = newTime;
+    protected void setCurrentTime(double newTime) {
+        currentTime = newTime;
     }
 }

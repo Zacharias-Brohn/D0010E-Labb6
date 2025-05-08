@@ -1,59 +1,54 @@
 package GenericSimulator;
 
-import java.util.Arrays;
-import java.util.List;
-
-//TODO: JavaDoc
-
 /**
  * @author Niklas lehtola
  * Describes the generic simulator
  */
 public class Simulator{
     private SimState state;
+    @SuppressWarnings("unused")
     private SimView view;
     private EventQueue eventQueue;
 
     /**
-     * Constructor for the simukator
+     * Constructor for the simulator. It sets the SimState, EventQueue and SimView (If there is one)
      * @param state the concrete state the simulator is to use
      * @param queue the eventqueue to use
      */
-    public Simulator(SimState state, EventQueue queue){
+    public Simulator(SimState state, EventQueue queue) throws IllegalArgumentException{
+        if (state == null || queue == null) {
+            throw new IllegalArgumentException("Neither state nor queue may be Null");
+        }
+        //The state passed into the Simulator has to be the same state as passed into the eventqueue start event.
+        if (!state.equals(queue.peek().currentState())) {
+            throw new IllegalArgumentException("State mismatch between state and queue");
+        }
         this.state = state;
         this.eventQueue = queue;
-        run();
-    }
-
-    public Simulator(SimState state, EventQueue queue, SimView view){
-        this(state, queue);
-        this.view = view;
+        this.view = state.createView();
     }
 
     /**
-     * The main loop of the simulator, it continues 
-     * until a an internal flag has been tripped or it runs out of events
+     * The main loop of the simulator, it continues until a a stop event 
+     * is invoked, internal flag has been tripped or it runs out of events
      */
     public void run() {
-        //Continues to invoke events until flag is tripped or no more events
-        while (continueSim()) {
+        //Continues to invoke events until a stop event, stop flag is tripped or no more events
+        while (state.continueSim()) {
             if (emptyQueue()) {
-                return;
+                state.forceStop();
             }
             invokeNextEvent();
-            //Moves current time forward to the time of the next event
-            updateCurrentTime();
         }
     }
 
+    //Triggers the effect of the invoked event
     private void invokeNextEvent(){
-        //Removes the first Event, invokes its effect and saves any events it creates in a list
-        List<Event> events = Arrays.asList(this.eventQueue.poll().invoke());
-
-        
+        //Removes the head event and invokes it. It returns a list of events to add to the queue
+        Event[] events = eventQueue.poll().invoke();
 
         //Returns to the loop if the invoked event didnt create any new events.
-        if (events.isEmpty() || events == null) { 
+        if (events == null) { 
             return;
         }
 
@@ -64,22 +59,9 @@ public class Simulator{
         
     }
 
-
     //Checks if the queue is empty
     private boolean emptyQueue(){
         return this.eventQueue.isEmpty(); //Queue is empty if first Object is null
-        
-    }
-
-    //Checks if the flag to stop is tripped.
-    private boolean continueSim(){ 
-        return !this.state.stopSim();
-    }
-
-    //Updates the current time to the time of the event invoked
-    private void updateCurrentTime(){
-
-        this.state.updateCurrentTime(eventQueue.peek().occurenceTime()); 
     }
 
 }

@@ -13,6 +13,9 @@ public class EventQueue extends PriorityQueue<Event>  {
      */
     public EventQueue(SimState state, Event startEvent){
         super(new SortedEvents()); //Creates a PriorityQueue with our custom comparator that sorts according to occurenceTime
+        if (startEvent == null) {
+            throw new IllegalArgumentException("StartEvent may not be null");
+        }
         this.add(startEvent);
     }
 }
